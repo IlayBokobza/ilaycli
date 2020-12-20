@@ -1,6 +1,7 @@
 {
-  "name": "@ilay-bokobza/ilaycli",
+  "name": "ilaycli",
   "version": "0.1.0",
+  "description": "",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -17,14 +18,5 @@
     "app-root-path": "^3.0.0",
     "chalk": "^4.1.0",
     "prompts": "^2.4.0"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/IlayBokobza/ilaycli.git"
-  },
-  "bugs": {
-    "url": "https://github.com/IlayBokobza/ilaycli/issues"
-  },
-  "homepage": "https://github.com/IlayBokobza/ilaycli#readme",
-  "description": ""
+  }
 }
