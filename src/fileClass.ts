@@ -13,7 +13,7 @@ export class BoilerFile{
         this.name = options.name
         this.extension = options.extension
         this.content = content
-        this.path = path.resolve(__dirname,options.path)
+        this.path = path.resolve(options.path)
     }
 
     write(){

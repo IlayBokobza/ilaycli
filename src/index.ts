@@ -1,86 +1,70 @@
+#!/usr/bin/env node
 import { BoilerFile } from './fileClass'
-import prompts from 'prompts'
 import chalk from 'chalk';
 import files from './files';
-import root from 'app-root-path';
-
-//global vars
-let projectName:string;
-let useMongo:boolean = false;
-let createPackageJsonG:boolean = false;
+import setOptions from './cli';
+import methods from './methods';
+import fs from 'fs'
 
 
 const createNodeServer = async () => {
-    const techUsed = await prompts({
-        type:'multiselect',
-        name:'value',
-        message:'What Features Do You Want To Use?',
-        choices:[
-            { title: 'MongoDB', value: 'mongo' },
-            { title: 'User Routes And Auth', value: 'users'},
-        ]
-    })
 
-    if(techUsed.value.indexOf('users') !== -1){
-        new BoilerFile({ name:'moongose',extension:'js',path:`${root.path}/server/db` },files.nodeServer.mongo(projectName)).write()
-        new BoilerFile({ name:'index',extension:'js',path:`${root.path}/server` },files.nodeServer.fullNodeIndex).write()
-        useMongo = true
-    }else if(techUsed.value.indexOf('mongo') !== -1){
-        new BoilerFile({ name:'moongose',extension:'js',path:`${root.path}/server/db` },files.nodeServer.mongo(projectName)).write()
-        new BoilerFile({ name:'index',extension:'js',path:`${root.path}/server` },files.nodeServer.nodeIndexMongo).write()
-        useMongo = true
+    //deletes server folder
+    fs.rmdirSync(`${process.cwd()}/server`,{ recursive:true })
+
+    if(options.dbBoilerplate === 'users'){
+        new BoilerFile({ name:'mongoose',extension:'js',path:`${process.cwd()}/server/db` },files.nodeServer.mongo(options.projectName)).write()
+        new BoilerFile({ name:'index',extension:'js',path:`${process.cwd()}/server` },files.nodeServer.fullNodeIndex).write()
+        new BoilerFile({ name:'user',extension:'js',path:`${process.cwd()}/server/models` },files.nodeServer.userSchema).write()
+        new BoilerFile({ name:'user',extension:'js',path:`${process.cwd()}/server/routes` },files.nodeServer.userRoutes).write()
+        new BoilerFile({ name:'auth',extension:'js',path:`${process.cwd()}/server/middleware` },files.nodeServer.authMiddleware)
+
+    }else if(options.dbBoilerplate === 'mongo'){
+        new BoilerFile({ name:'moongose',extension:'js',path:`${process.cwd()}/server/db` },files.nodeServer.mongo(options.projectName)).write()
+        new BoilerFile({ name:'index',extension:'js',path:`${process.cwd()}/server` },files.nodeServer.nodeIndexMongo).write()
+
     }else {
-        new BoilerFile({ name:'index',extension:'js',path:`${root.path}/server` },files.nodeServer.normalNodeServer).write()
+        new BoilerFile({ name:'index',extension:'js',path:`${process.cwd()}/server` },files.nodeServer.normalNodeServer).write()
     }
 
-    if(createPackageJsonG){
-        if(useMongo){
-            new BoilerFile({ name:'package',extension:'json',path:`${root.path}/server` },files.nodeServer.packageJsonMongo(projectName)).write()
-        }else{
-            new BoilerFile({ name:'package',extension:'json',path:`${root.path}/server` },files.nodeServer.packageJsonNoMongo(projectName)).write()
-        }
+
+    //creating package json or dependencies file 
+    let dependencies:{ name:string,version:string }[] = [{ name:'express',version:'^4.17.1' }]
+
+    if(options.dbBoilerplate === 'users'){
+        dependencies.push({ name:'mongoose',version:'^5.11.8' },{ name:'jsonwebtoken',version:'^8.5.1' },{ name:'bcryptjs',version:'^2.4.3' },{ name:'validator',version:'^13.4.2' })
+    } else if(options.dbBoilerplate === 'mongo'){
+        dependencies.push({ name:'mongoose',version:'^5.11.8' })
     }
 
-    console.log(chalk.green('Boiler Plate Generated!\n cd server \n npm i'))
+    if(options.usePackageJson){
+        new BoilerFile({ name:'package',extension:'json',path:`${process.cwd()}/server` },methods.createPackageJson(options.projectName,dependencies)).write()
+    }else{
+        new BoilerFile({ name:'dependencies',extension:'json',path:`${process.cwd()}/server` },JSON.stringify(methods.createDependenciesObject(dependencies))).write()
+    }
 }
 
+
+//boiler plate options
+let options:{
+    type:string,
+    projectName:string,
+    usePackageJson:boolean,
+    dbBoilerplate:string
+}
+
+
 (async () => {
-    const selectedBoilerPlate = await prompts({
-        type:'select',
-        name:'value',
-        message:'What Do You Want to Create?',
-        choices:[
-            { title:'BackEnd Node Server',value:'node-server' },
-            { title:'Exit',value:null },
-        ],
-        initial:1
-    })
-
-    const userProjectName = await prompts({
-        type:'text',
-        name:'value',
-        message:'What is the Name of your project?'
-    })
-
-    projectName = userProjectName.value
-    projectName = projectName.toLowerCase().replace(/\s/g, '')
-
-    const createPackageJson = await prompts({
-        type:'toggle',
-        name:'value',
-        message:'Do you want a package.json?'
-    })
-
-    createPackageJsonG = createPackageJson.value
-
-    switch(selectedBoilerPlate.value){
+    const selectedOptions = await setOptions()
+    options = selectedOptions
+    
+    switch(options.type){
         case 'node-server':
-            createNodeServer()
-            break;
-
-        case null:
+            createNodeServer();
             break;
     }
 
-    
+    console.log(chalk.greenBright('Boiler Plate Generated! ✌'))
+    console.log(chalk.blue('cd server 🚄'))
+    console.log(chalk.blue('npm install 🎯'))
 })()

@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 "use strict";
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
@@ -40,95 +41,64 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 var fileClass_1 = require("./fileClass");
-var prompts_1 = __importDefault(require("prompts"));
 var chalk_1 = __importDefault(require("chalk"));
 var files_1 = __importDefault(require("./files"));
-var app_root_path_1 = __importDefault(require("app-root-path"));
-//global vars
-var projectName;
-var useMongo = false;
-var createPackageJsonG = false;
+var cli_1 = __importDefault(require("./cli"));
+var methods_1 = __importDefault(require("./methods"));
+var fs_1 = __importDefault(require("fs"));
 var createNodeServer = function () { return __awaiter(void 0, void 0, void 0, function () {
-    var techUsed;
+    var dependencies;
     return __generator(this, function (_a) {
-        switch (_a.label) {
-            case 0: return [4 /*yield*/, prompts_1.default({
-                    type: 'multiselect',
-                    name: 'value',
-                    message: 'What Features Do You Want To Use?',
-                    choices: [
-                        { title: 'MongoDB', value: 'mongo' },
-                        { title: 'User Routes And Auth', value: 'users' },
-                    ]
-                })];
-            case 1:
-                techUsed = _a.sent();
-                if (techUsed.value.indexOf('users') !== -1) {
-                    new fileClass_1.BoilerFile({ name: 'moongose', extension: 'js', path: app_root_path_1.default.path + "/server/db" }, files_1.default.nodeServer.mongo(projectName)).write();
-                    new fileClass_1.BoilerFile({ name: 'index', extension: 'js', path: app_root_path_1.default.path + "/server" }, files_1.default.nodeServer.fullNodeIndex).write();
-                    useMongo = true;
-                }
-                else if (techUsed.value.indexOf('mongo') !== -1) {
-                    new fileClass_1.BoilerFile({ name: 'moongose', extension: 'js', path: app_root_path_1.default.path + "/server/db" }, files_1.default.nodeServer.mongo(projectName)).write();
-                    new fileClass_1.BoilerFile({ name: 'index', extension: 'js', path: app_root_path_1.default.path + "/server" }, files_1.default.nodeServer.nodeIndexMongo).write();
-                    useMongo = true;
-                }
-                else {
-                    new fileClass_1.BoilerFile({ name: 'index', extension: 'js', path: app_root_path_1.default.path + "/server" }, files_1.default.nodeServer.normalNodeServer).write();
-                }
-                if (createPackageJsonG) {
-                    if (useMongo) {
-                        new fileClass_1.BoilerFile({ name: 'package', extension: 'json', path: app_root_path_1.default.path + "/server" }, files_1.default.nodeServer.packageJsonMongo(projectName)).write();
-                    }
-                    else {
-                        new fileClass_1.BoilerFile({ name: 'package', extension: 'json', path: app_root_path_1.default.path + "/server" }, files_1.default.nodeServer.packageJsonNoMongo(projectName)).write();
-                    }
-                }
-                console.log(chalk_1.default.green('Boiler Plate Generated!\n cd server \n npm i'));
-                return [2 /*return*/];
+        //deletes server folder
+        fs_1.default.rmdirSync(process.cwd() + "/server", { recursive: true });
+        if (options.dbBoilerplate === 'users') {
+            new fileClass_1.BoilerFile({ name: 'mongoose', extension: 'js', path: process.cwd() + "/server/db" }, files_1.default.nodeServer.mongo(options.projectName)).write();
+            new fileClass_1.BoilerFile({ name: 'index', extension: 'js', path: process.cwd() + "/server" }, files_1.default.nodeServer.fullNodeIndex).write();
+            new fileClass_1.BoilerFile({ name: 'user', extension: 'js', path: process.cwd() + "/server/models" }, files_1.default.nodeServer.userSchema).write();
+            new fileClass_1.BoilerFile({ name: 'user', extension: 'js', path: process.cwd() + "/server/routes" }, files_1.default.nodeServer.userRoutes).write();
+            new fileClass_1.BoilerFile({ name: 'auth', extension: 'js', path: process.cwd() + "/server/middleware" }, files_1.default.nodeServer.authMiddleware);
         }
+        else if (options.dbBoilerplate === 'mongo') {
+            new fileClass_1.BoilerFile({ name: 'moongose', extension: 'js', path: process.cwd() + "/server/db" }, files_1.default.nodeServer.mongo(options.projectName)).write();
+            new fileClass_1.BoilerFile({ name: 'index', extension: 'js', path: process.cwd() + "/server" }, files_1.default.nodeServer.nodeIndexMongo).write();
+        }
+        else {
+            new fileClass_1.BoilerFile({ name: 'index', extension: 'js', path: process.cwd() + "/server" }, files_1.default.nodeServer.normalNodeServer).write();
+        }
+        dependencies = [{ name: 'express', version: '^4.17.1' }];
+        if (options.dbBoilerplate === 'users') {
+            dependencies.push({ name: 'mongoose', version: '^5.11.8' }, { name: 'jsonwebtoken', version: '^8.5.1' }, { name: 'bcryptjs', version: '^2.4.3' }, { name: 'validator', version: '^13.4.2' });
+        }
+        else if (options.dbBoilerplate === 'mongo') {
+            dependencies.push({ name: 'mongoose', version: '^5.11.8' });
+        }
+        if (options.usePackageJson) {
+            new fileClass_1.BoilerFile({ name: 'package', extension: 'json', path: process.cwd() + "/server" }, methods_1.default.createPackageJson(options.projectName, dependencies)).write();
+        }
+        else {
+            new fileClass_1.BoilerFile({ name: 'dependencies', extension: 'json', path: process.cwd() + "/server" }, JSON.stringify(methods_1.default.createDependenciesObject(dependencies))).write();
+        }
+        return [2 /*return*/];
     });
 }); };
+//boiler plate options
+var options;
 (function () { return __awaiter(void 0, void 0, void 0, function () {
-    var selectedBoilerPlate, userProjectName, createPackageJson;
+    var selectedOptions;
     return __generator(this, function (_a) {
         switch (_a.label) {
-            case 0: return [4 /*yield*/, prompts_1.default({
-                    type: 'select',
-                    name: 'value',
-                    message: 'What Do You Want to Create?',
-                    choices: [
-                        { title: 'BackEnd Node Server', value: 'node-server' },
-                        { title: 'Exit', value: null },
-                    ],
-                    initial: 1
-                })];
+            case 0: return [4 /*yield*/, cli_1.default()];
             case 1:
-                selectedBoilerPlate = _a.sent();
-                return [4 /*yield*/, prompts_1.default({
-                        type: 'text',
-                        name: 'value',
-                        message: 'What is the Name of your project?'
-                    })];
-            case 2:
-                userProjectName = _a.sent();
-                projectName = userProjectName.value;
-                projectName = projectName.toLowerCase().replace(/\s/g, '');
-                return [4 /*yield*/, prompts_1.default({
-                        type: 'toggle',
-                        name: 'value',
-                        message: 'Do you want a package.json?'
-                    })];
-            case 3:
-                createPackageJson = _a.sent();
-                createPackageJsonG = createPackageJson.value;
-                switch (selectedBoilerPlate.value) {
+                selectedOptions = _a.sent();
+                options = selectedOptions;
+                switch (options.type) {
                     case 'node-server':
                         createNodeServer();
                         break;
-                    case null:
-                        break;
                 }
+                console.log(chalk_1.default.greenBright('Boiler Plate Generated! ✌'));
+                console.log(chalk_1.default.blue('cd server 🚄'));
+                console.log(chalk_1.default.blue('npm install 🎯'));
                 return [2 /*return*/];
         }
     });

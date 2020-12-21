@@ -21,6 +21,31 @@ var getAllDirectories = function (path) {
     }
     return output;
 };
+var createPackageJson = function (name, dependencies) {
+    var baseFile = {
+        name: name,
+        version: "1.0.0",
+        description: "",
+        main: "index.js",
+        scripts: {
+            "test": "echo \"Error: no test specified\" && exit 1"
+        },
+        author: "",
+        license: "ISC",
+        dependencies: {}
+    };
+    dependencies.forEach(function (dependency) {
+        baseFile.dependencies[dependency.name] = dependency.version;
+    });
+    return JSON.stringify(baseFile);
+};
+var createDependenciesObject = function (arr) {
+    var output = {};
+    arr.forEach(function (item) { return output[item.name] = item.version; });
+    return output;
+};
 exports.default = {
     getAllDirectories: getAllDirectories,
+    createPackageJson: createPackageJson,
+    createDependenciesObject: createDependenciesObject,
 };

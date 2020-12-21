@@ -12,7 +12,7 @@ var BoilerFile = /** @class */ (function () {
         this.name = options.name;
         this.extension = options.extension;
         this.content = content;
-        this.path = path_1.default.resolve(__dirname, options.path);
+        this.path = path_1.default.resolve(options.path);
     }
     BoilerFile.prototype.write = function () {
         var folders = methods_1.default.getAllDirectories(this.path);
